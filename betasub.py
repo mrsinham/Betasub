@@ -32,6 +32,7 @@ from optparse import OptionParser
 from threading import Timer
 import ConfigParser
 import logging
+import string
 
 #mode debug
 #logging.basicConfig( format='%(levelname)s:[%(funcName)s,%(lineno)s]:%(message)s',level=logging.DEBUG)
@@ -427,6 +428,7 @@ class Sub:
         print directory
         if os.path.isdir(directory) :
             logging.info(file_name)
+            # need to strip weirds characters
             urllib.urlretrieve(file_url, directory+file_name)
 
         else:
@@ -621,8 +623,8 @@ class Program:
             #si sub dir correct
             if os.path.isdir(self.default_dir):
                 #on corrige le path principal si mal form�
-                if self.default_dir[-1] not in ["/", "\\"]:
-                    self.default_dir = self.default_dir+"\\"
+                if self.default_dir[-1] not in [os.sep]:
+                    self.default_dir = self.default_dir+os.sep
 
                 #on s'assure que l'utilisateur a bien param�tr� le sub_dir
                 #si l'utilisateur veut ses srt dans un dossier special
@@ -852,6 +854,8 @@ class Program:
         title = "file"
         if self.mode == 'episodes':
             title = "filename"
+
+        valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
             
         # si sous-titres
         if subs_list != []:
@@ -881,6 +885,9 @@ class Program:
                         if subs['url'] not in database:
                             subs_dict_to_compar[subs['url']] = {}
                             subs_dict_to_compar[subs['url']]["file_subs_list"] = list()
+
+                            # strip weird char
+                            subs[title] = ''.join(c for c in subs[title] if c in valid_chars)
 
                             #download
                             self.Sub.download_file(  subs[title],
@@ -928,6 +935,9 @@ class Program:
                 for subs in subs_list:
                     subs_dict_to_compar[subs['url']] = {}
                     subs_dict_to_compar[subs['url']]["file_subs_list"] = list()
+
+                    # strip weird char
+                    subs[title] = ''.join(c for c in subs[title] if c in valid_chars)
                     #download
                     self.Sub.download_file(  subs[title],
                                               subs['url'],
@@ -1360,7 +1370,7 @@ class Program:
         reset_default_dir = self.default_dir
         resest_subtitles_dir = self.subtitles_dir
         video_list = self.define_video_list()
-            
+
         #si il n'y a aucune video
         if not video_list:
             logging.info("You've no need BetaSub right now !")
@@ -1369,10 +1379,13 @@ class Program:
             
         for files in video_list:
             #dossier du fichier vid�o
-            real_default_dir = "%s\\" % os.path.dirname(files)
+
+            #real_default_dir = "%s\\" % os.path.dirname(files)
+            real_default_dir = os.path.dirname(files) + os.sep
             #liste des srt du fichier
             subs_list = self.Beta.file_subtitles(files)
-            if subs_list == []:
+
+            if not subs_list != []:
                 file_name = self.file_base(files)['name']
                 logging.info("No Subtitles for %s" % file_name)
                 pass
