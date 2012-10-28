@@ -425,7 +425,6 @@ class Sub:
         """T�l�charge les sous-titres dans le r�pertoire indiqu�
 
         """
-        print directory
         if os.path.isdir(directory) :
             logging.info(file_name)
             # need to strip weirds characters
@@ -436,6 +435,9 @@ class Sub:
             logging.critical("error: directory do not exist.")
             return False
 
+    def clean_filename(self, sPreviousFilename):
+        valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
+        return ''.join(c for c in sPreviousFilename if c in valid_chars)
 
 
     def unzip_file(self, zip_file, directory,  use_filter=False, filters_regex=""):
@@ -460,6 +462,8 @@ class Sub:
                         data = zip_data.read(subs, directory)
                         #on transforme le chemin des sous-dossier en dossier commun
                         sub_path = os.path.join(directory, subs.split("/")[-1])
+                        # cleaning name
+                        sub_path = self.clean_filename(sub_path)
                         #on �vite les dossier
                         if os.path.isdir(sub_path): continue
                         #on �crit les fichiers
